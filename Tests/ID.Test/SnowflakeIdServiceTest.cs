@@ -4,7 +4,7 @@ namespace ID.Test
     using System;
     using Xunit;
 
-    public class SnowflakeServiceTest
+    public class SnowflakeIdServiceTest
     {
         private static readonly DateTime DefaultEpoch = new DateTime(1, 1, 1);
 
@@ -17,13 +17,14 @@ namespace ID.Test
         public void CreateSnowflake_DefaultDatacenterAndWorderIds_GeneratesId(string now, ulong expectedSnowflakeId)
         {
             var nowDateTime = DateTime.Parse(now);
-            var options = new SnowflakeOptions(DefaultEpoch)
+            var options = new SnowflakeIdOptions()
             {
+                Epoch = DefaultEpoch,
                 GetUtcNow = () => nowDateTime,
             };
-            var snowflakeService = new SnowflakeService(options);
+            var snowflakeService = new SnowflakeIdService(options);
 
-            var snowflakeId = snowflakeService.CreateSnowflake();
+            var snowflakeId = snowflakeService.CreateSnowflakeId();
 
             Assert.Equal(expectedSnowflakeId, snowflakeId);
         }
@@ -32,19 +33,23 @@ namespace ID.Test
         public void CreateSnowflake_TwoDifferentDataCenters_ProduceDifferentIds()
         {
             var nowDateTime = new DateTime(2000, 1, 1);
-            var options1 = new SnowflakeOptions(DefaultEpoch, 1)
+            var options1 = new SnowflakeIdOptions()
             {
+                Epoch = DefaultEpoch,
+                DatacenterId = 1,
                 GetUtcNow = () => nowDateTime,
             };
-            var options2 = new SnowflakeOptions(DefaultEpoch, 2)
+            var options2 = new SnowflakeIdOptions()
             {
+                Epoch = DefaultEpoch,
+                DatacenterId = 2,
                 GetUtcNow = () => nowDateTime,
             };
-            var snowflakeService1 = new SnowflakeService(options1);
-            var snowflakeService2 = new SnowflakeService(options2);
+            var snowflakeService1 = new SnowflakeIdService(options1);
+            var snowflakeService2 = new SnowflakeIdService(options2);
 
-            var snowflakeId1 = snowflakeService1.CreateSnowflake();
-            var snowflakeId2 = snowflakeService2.CreateSnowflake();
+            var snowflakeId1 = snowflakeService1.CreateSnowflakeId();
+            var snowflakeId2 = snowflakeService2.CreateSnowflakeId();
 
             Assert.NotEqual(snowflakeId1, snowflakeId2);
         }
@@ -53,19 +58,25 @@ namespace ID.Test
         public void CreateSnowflake_TwoDifferentWorkers_ProduceDifferentIds()
         {
             var nowDateTime = new DateTime(2000, 1, 1);
-            var options1 = new SnowflakeOptions(DefaultEpoch, 1, 1)
+            var options1 = new SnowflakeIdOptions()
             {
+                Epoch = DefaultEpoch,
+                DatacenterId = 1,
+                WorkerId = 1,
                 GetUtcNow = () => nowDateTime,
             };
-            var options2 = new SnowflakeOptions(DefaultEpoch, 1, 2)
+            var options2 = new SnowflakeIdOptions()
             {
+                Epoch = DefaultEpoch,
+                DatacenterId = 1,
+                WorkerId = 2,
                 GetUtcNow = () => nowDateTime,
             };
-            var snowflakeService1 = new SnowflakeService(options1);
-            var snowflakeService2 = new SnowflakeService(options2);
+            var snowflakeService1 = new SnowflakeIdService(options1);
+            var snowflakeService2 = new SnowflakeIdService(options2);
 
-            var snowflakeId1 = snowflakeService1.CreateSnowflake();
-            var snowflakeId2 = snowflakeService2.CreateSnowflake();
+            var snowflakeId1 = snowflakeService1.CreateSnowflakeId();
+            var snowflakeId2 = snowflakeService2.CreateSnowflakeId();
 
             Assert.NotEqual(snowflakeId1, snowflakeId2);
         }
@@ -73,12 +84,15 @@ namespace ID.Test
         [Fact]
         public void CreateSnowflake_Default_DoesNotGenerateZeroOrNegativeIds()
         {
-            var options = new SnowflakeOptions(DefaultEpoch);
-            var snowflakeService = new SnowflakeService(options);
+            var options = new SnowflakeIdOptions()
+            {
+                Epoch = DefaultEpoch,
+            };
+            var snowflakeService = new SnowflakeIdService(options);
 
             for (var i = 0; i < 1_000_000; i++)
             {
-                var snowflakeId = snowflakeService.CreateSnowflake();
+                var snowflakeId = snowflakeService.CreateSnowflakeId();
 
                 Assert.False(snowflakeId <= 0);
             }
@@ -87,15 +101,18 @@ namespace ID.Test
         [Fact]
         public void CreateSnowflake_Default_GeneratesSequentialIds()
         {
-            var options = new SnowflakeOptions(DefaultEpoch);
-            var snowflakeService = new SnowflakeService(options);
+            var options = new SnowflakeIdOptions()
+            {
+                Epoch = DefaultEpoch,
+            };
+            var snowflakeService = new SnowflakeIdService(options);
 
             ulong? snowflakeId = null;
             ulong? lastSnowflakeId = null;
             for (var i = 0; i < 1_000_000; i++)
             {
                 lastSnowflakeId = snowflakeId;
-                snowflakeId = snowflakeService.CreateSnowflake();
+                snowflakeId = snowflakeService.CreateSnowflakeId();
 
                 if (lastSnowflakeId.HasValue)
                 {
@@ -110,7 +127,10 @@ namespace ID.Test
             var count = 0;
             var now1 = new DateTime(2000, 1, 1);
             var now2 = new DateTime(2000, 1, 1).AddMilliseconds(-1);
-            var options = new SnowflakeOptions(DefaultEpoch);
+            var options = new SnowflakeIdOptions()
+            {
+                Epoch = DefaultEpoch,
+            };
             options.GetUtcNow =
                 () =>
                 {
@@ -122,10 +142,10 @@ namespace ID.Test
 
                     return now2;
                 };
-            var snowflakeService = new SnowflakeService(options);
+            var snowflakeService = new SnowflakeIdService(options);
 
-            snowflakeService.CreateSnowflake();
-            Assert.Throws<InvalidOperationException>(() => snowflakeService.CreateSnowflake());
+            snowflakeService.CreateSnowflakeId();
+            Assert.Throws<InvalidOperationException>(() => snowflakeService.CreateSnowflakeId());
         }
     }
 }

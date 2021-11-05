@@ -1,6 +1,6 @@
 namespace Boxed.AspNetCore
 {
-    public class SnowflakeService
+    public class SnowflakeIdService
     {
         private const int SequenceBits = 12;
         private readonly int WorkerIdShift;
@@ -11,9 +11,10 @@ namespace Boxed.AspNetCore
         private ulong lastTimestamp;
         private ulong sequence;
 
-        public SnowflakeService(SnowflakeOptions options)
+        public SnowflakeIdService(SnowflakeIdOptions options)
         {
             ArgumentNullException.ThrowIfNull(options);
+            options.Validate();
 
             this.Options = options;
 
@@ -23,9 +24,9 @@ namespace Boxed.AspNetCore
             SequenceMask = -1L ^ (-1L << SequenceBits);
         }
 
-        public SnowflakeOptions Options { get; }
+        public SnowflakeIdOptions Options { get; }
 
-        public ulong CreateSnowflake()
+        public ulong CreateSnowflakeId()
         {
             var timestamp = this.GetTimestampInMilliseconds();
 
